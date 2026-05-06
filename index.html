@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetRoute - Agenda para Técnicos</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class='bx bx-wifi'></i>
+                <span>NetRoute</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-tab="dashboard">
+                    <i class='bx bx-grid-alt'></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="agenda">
+                    <i class='bx bx-calendar-plus'></i>
+                    <span>Agendar Instalación</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="ruta">
+                    <i class='bx bx-map-alt'></i>
+                    <span>Ruta Óptima</span>
+                </a>
+            </nav>
+            <div class="user-info">
+                <div class="avatar">
+                    <img src="https://ui-avatars.com/api/?name=Admin+Despacho&background=0D8ABC&color=fff" alt="User">
+                </div>
+                <div class="details">
+                    <h4>Admin Despacho</h4>
+                    <p>Coordinador</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="search-bar">
+                    <i class='bx bx-search'></i>
+                    <input type="text" placeholder="Buscar cliente, ID o técnico...">
+                </div>
+                <div class="topbar-actions">
+                    <button class="icon-btn"><i class='bx bx-bell'></i></button>
+                    <div class="datetime-display" id="currentDateTime"></div>
+                </div>
+            </header>
+
+            <div class="content-wrapper">
+
+                <!-- Tab: Dashboard -->
+                <section id="dashboard" class="tab-content active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;">
+                                <i class='bx bx-calendar-check'></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Instalaciones Hoy</h3>
+                                <p id="stat-today">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">
+                                <i class='bx bx-check-shield'></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Completadas</h3>
+                                <p>0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">
+                                <i class='bx bx-user-pin'></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Técnicos Activos</h3>
+                                <p>4</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recent-jobs">
+                        <div class="section-header">
+                            <h2>Próximas Instalaciones</h2>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="jobsTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID Cliente</th>
+                                        <th>Cliente</th>
+                                        <th>Fecha / Hora</th>
+                                        <th>Técnico</th>
+                                        <th>Ubicación</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tab: Agendar -->
+                <section id="agenda" class="tab-content">
+                    <div class="form-container">
+                        <h2>Agendar Nueva Instalación</h2>
+                        <form id="agendaForm">
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>ID Cliente</label>
+                                    <input type="text" id="clientId" required placeholder="Ej. CLI-1029">
+                                </div>
+                                <div class="input-group">
+                                    <label>Nombre de Cliente</label>
+                                    <input type="text" id="clientName" required placeholder="Ej. Juan Pérez">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>Fecha de Instalación</label>
+                                    <input type="date" id="installDate" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>Hora de Instalación</label>
+                                    <input type="time" id="installTime" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>Técnico Asignado</label>
+                                    <select id="technician" required>
+                                        <option value="" disabled selected>Seleccione un técnico</option>
+                                        <option value="Tec. Roberto Gómez">Tec. Roberto Gómez</option>
+                                        <option value="Tec. Ana López">Tec. Ana López</option>
+                                        <option value="Tec. Carlos Ruiz">Tec. Carlos Ruiz</option>
+                                        <option value="Tec. María Torres">Tec. María Torres</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label>Quien Agenda</label>
+                                    <input type="text" id="schedulerName" value="Admin Despacho" readonly>
+                                </div>
+                            </div>
+
+                            <div class="form-row full-width">
+                                <div class="input-group">
+                                    <label>Ubicación (Dirección aproximada en la ciudad)</label>
+                                    <div class="location-picker">
+                                        <select id="cityZone" required>
+                                            <option value="" disabled selected>Selecciona una zona de la ciudad</option>
+                                            <option value="20.659698,-103.349609">Centro Histórico</option>
+                                            <option value="20.676667,-103.421667">Zapopan Centro</option>
+                                            <option value="20.630000,-103.310000">Tlaquepaque</option>
+                                            <option value="20.730000,-103.400000">Belenes</option>
+                                            <option value="20.600000,-103.430000">Sur (Bugambilias)</option>
+                                            <option value="20.660000,-103.390000">Minerva / Providencia</option>
+                                        </select>
+                                    </div>
+                                    <small>Nota: Se simulará una coordenada precisa basada en la zona seleccionada para
+                                        demostración.</small>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary">
+                                <i class='bx bx-save'></i> Guardar y Agendar
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Tab: Ruta -->
+                <section id="ruta" class="tab-content">
+                    <div class="route-header">
+                        <h2>Ruta Óptima del Técnico</h2>
+                        <div class="route-controls">
+                            <select id="routeTechnician">
+                                <option value="all">Todos los técnicos</option>
+                                <option value="Tec. Roberto Gómez">Tec. Roberto Gómez</option>
+                                <option value="Tec. Ana López">Tec. Ana López</option>
+                                <option value="Tec. Carlos Ruiz">Tec. Carlos Ruiz</option>
+                                <option value="Tec. María Torres">Tec. María Torres</option>
+                            </select>
+                            <button id="btnOptimize" class="btn-secondary">
+                                <i class='bx bx-trip'></i> Generar Ruta Óptima
+                            </button>
+                        </div>
+                    </div>
+                    <div class="map-container">
+                        <div id="map"></div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <!-- Custom App Logic -->
+    <script src="index.js"></script>
+</body>
+
+</html>
