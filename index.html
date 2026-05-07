@@ -172,20 +172,12 @@
 
                             <div class="form-row full-width">
                                 <div class="input-group">
-                                    <label>Ubicación (Dirección aproximada en la ciudad)</label>
+                                    <label>Ubicación del Cliente (Coordenadas)</label>
                                     <div class="location-picker">
-                                        <select id="cityZone" required>
-                                            <option value="" disabled selected>Selecciona una zona de la ciudad</option>
-                                            <option value="20.659698,-103.349609">Centro Histórico</option>
-                                            <option value="20.676667,-103.421667">Zapopan Centro</option>
-                                            <option value="20.630000,-103.310000">Tlaquepaque</option>
-                                            <option value="20.730000,-103.400000">Belenes</option>
-                                            <option value="20.600000,-103.430000">Sur (Bugambilias)</option>
-                                            <option value="20.660000,-103.390000">Minerva / Providencia</option>
-                                        </select>
+                                        <input type="text" id="coordsInput" placeholder="Ej. 23.247596, -106.411560"
+                                            required style="width: 100%;">
                                     </div>
-                                    <small>Nota: Se simulará una coordenada precisa basada en la zona seleccionada para
-                                        demostración.</small>
+                                    <small>Pega aquí la latitud y longitud separadas por coma.</small>
                                 </div>
                             </div>
 

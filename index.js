@@ -99,11 +99,11 @@ function setupForm() {
         const tech = document.getElementById('technician').value;
         const scheduler = document.getElementById('schedulerName').value;
 
-        const cityZoneSelect = document.getElementById('cityZone');
-        const locationStr = cityZoneSelect.options[cityZoneSelect.selectedIndex].text;
-        const coords = cityZoneSelect.value.split(',');
-        const lat = parseFloat(coords[0]);
-        const lng = parseFloat(coords[1]);
+        const coordsStr = document.getElementById('coordsInput').value;
+        const coordsArray = coordsStr.split(',');
+        const lat = parseFloat(coordsArray[0].trim());
+        const lng = parseFloat(coordsArray[1].trim());
+        const locationStr = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 
         // Small offset so if same zone is selected, markers don't overlap completely
         const latOffset = (Math.random() - 0.5) * 0.01;
@@ -178,7 +178,7 @@ function renderJobsTable() {
 
 function initMap() {
     // Guadalajara center coordinates
-    map = L.map('map').setView([20.659698, -103.349609], 12);
+    map = L.map('map').setView([23.247596, -106.411560], 12);
 
     // Dark theme map tiles (CartoDB Dark Matter)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
