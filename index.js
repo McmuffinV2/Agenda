@@ -103,11 +103,7 @@ function setupForm() {
         const coordsArray = coordsStr.split(',');
         const lat = parseFloat(coordsArray[0].trim());
         const lng = parseFloat(coordsArray[1].trim());
-        const locationStr = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-
-        // Small offset so if same zone is selected, markers don't overlap completely
-        const latOffset = (Math.random() - 0.5) * 0.01;
-        const lngOffset = (Math.random() - 0.5) * 0.01;
+        const locationStr = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
 
         const now = new Date();
         const scheduledAt = `${now.toLocaleDateString()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -119,8 +115,8 @@ function setupForm() {
             time,
             tech,
             locationStr,
-            lat: lat + latOffset,
-            lng: lng + lngOffset,
+            lat: lat,
+            lng: lng,
             scheduledAt,
             scheduler,
             status: "Pendiente"
