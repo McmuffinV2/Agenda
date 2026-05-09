@@ -23,6 +23,12 @@
 </head>
 
 <body>
+    <!-- Welcome Toast -->
+    <div id="welcomeToast" class="welcome-toast">
+        <i class='bx bx-user-check'></i>
+        <span id="welcomeMessage">¡Bienvenido!</span>
+    </div>
+
     <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -46,12 +52,18 @@
             </nav>
             <div class="user-info">
                 <div class="avatar">
-                    <img src="https://ui-avatars.com/api/?name=Admin+Despacho&background=0D8ABC&color=fff" alt="User">
+                    <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User"
+                        id="userAvatar">
                 </div>
                 <div class="details">
-                    <h4>Admin Despacho</h4>
-                    <p>Coordinador</p>
+                    <h4 id="userNameDisplay" style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 2px;">
+                        Usuario</h4>
+                    <p id="userRoleLabel">Rol</p>
                 </div>
+                <button id="btnLogout" class="icon-btn" style="width: 32px; height: 32px; margin-left: auto;"
+                    title="Cerrar sesión">
+                    <i class='bx bx-log-out'></i>
+                </button>
             </div>
         </aside>
 
@@ -116,6 +128,7 @@
                                         <th>Técnico</th>
                                         <th>Ubicación</th>
                                         <th>Estado</th>
+                                        <th class="actions-col">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -181,9 +194,15 @@
                                 </div>
                             </div>
 
-                            <button type="submit" class="btn-primary">
-                                <i class='bx bx-save'></i> Guardar y Agendar
-                            </button>
+                            <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                                <button type="submit" class="btn-primary" id="formSubmitBtn" style="margin-top: 0;">
+                                    <i class='bx bx-save'></i> Guardar y Agendar
+                                </button>
+                                <button type="button" class="btn-secondary" id="formCancelBtn"
+                                    style="display: none; margin-top: 0;">
+                                    Cancelar
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </section>

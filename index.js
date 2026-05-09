@@ -32,8 +32,38 @@ let map;
 let routingControl;
 let markers = [];
 
+// Role state
+let currentUserRole = 'user';
+let currentUserName = 'Usuario';
+let editingJobId = null;
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Check login
+    const userStr = sessionStorage.getItem('netroute_user');
+    if (!userStr) {
+        window.location.href = 'Login.html';
+        return;
+    }
+
+    const user = JSON.parse(userStr);
+    currentUserRole = user.role;
+    currentUserName = user.name;
+
     initApp();
+
+    // Show welcome toast
+    const toast = document.getElementById('welcomeToast');
+    const msg = document.getElementById('welcomeMessage');
+    if (toast && msg) {
+        msg.innerText = `¡Bienvenido, ${currentUserName}!`;
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 500);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 4000);
+    }
 });
 
 function initApp() {
@@ -42,11 +72,89 @@ function initApp() {
 
     setupTabs();
     setupForm();
-    renderJobsTable();
     initMap();
+    updateRoleUI();
 
     document.getElementById('btnOptimize').addEventListener('click', generateRoute);
     document.getElementById('routeTechnician').addEventListener('change', generateRoute);
+
+    const btnLogout = document.getElementById('btnLogout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            sessionStorage.removeItem('netroute_user');
+            window.location.href = 'Login.html';
+        });
+    }
+}
+
+function updateRoleUI() {
+    const avatar = document.getElementById('userAvatar');
+    const nameDisplay = document.getElementById('userNameDisplay');
+    const label = document.getElementById('userRoleLabel');
+    const schedulerInput = document.getElementById('schedulerName');
+
+    if (nameDisplay) nameDisplay.innerText = currentUserName;
+
+    if (currentUserRole === 'admin') {
+        avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserName)}&background=0D8ABC&color=fff`;
+        label.innerText = "Administrador";
+        schedulerInput.value = currentUserName;
+        document.body.classList.add('role-admin');
+        document.body.classList.remove('role-user');
+    } else {
+        avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserName)}&background=6B7280&color=fff`;
+        label.innerText = "Agendador";
+        schedulerInput.value = currentUserName;
+        document.body.classList.add('role-user');
+        document.body.classList.remove('role-admin');
+    }
+    renderJobsTable();
+}
+
+function deleteJob(id) {
+    if (currentUserRole !== 'admin') {
+        alert('No tienes permisos para eliminar instalaciones.');
+        return;
+    }
+    if (confirm(`¿Estás seguro de eliminar la instalación con ID ${id}?`)) {
+        jobs = jobs.filter(j => j.id !== id);
+        renderJobsTable();
+        if (document.getElementById('ruta').classList.contains('active')) {
+            generateRoute();
+        }
+    }
+}
+
+function editJob(id) {
+    if (currentUserRole !== 'admin') {
+        alert('No tienes permisos para editar instalaciones.');
+        return;
+    }
+    const job = jobs.find(j => j.id === id);
+    if (!job) return;
+
+    editingJobId = id;
+
+    document.getElementById('clientId').value = job.id;
+    document.getElementById('clientName').value = job.name;
+    document.getElementById('installDate').value = job.date;
+    document.getElementById('installTime').value = job.time;
+    document.getElementById('technician').value = job.tech;
+    document.getElementById('coordsInput').value = `${job.lat}, ${job.lng}`;
+
+    document.getElementById('formSubmitBtn').innerHTML = "<i class='bx bx-save'></i> Guardar Cambios";
+    document.getElementById('formCancelBtn').style.display = "inline-flex";
+
+    // Switch to tab
+    document.querySelector('.nav-item[data-tab="agenda"]').click();
+}
+
+function cancelEdit() {
+    editingJobId = null;
+    document.getElementById('agendaForm').reset();
+    document.getElementById('installDate').valueAsDate = new Date();
+    document.getElementById('formSubmitBtn').innerHTML = "<i class='bx bx-save'></i> Guardar y Agendar";
+    document.getElementById('formCancelBtn').style.display = "none";
 }
 
 function updateDateTime() {
@@ -89,6 +197,11 @@ function setupForm() {
     // Set default date to today
     document.getElementById('installDate').valueAsDate = new Date();
 
+    const cancelBtn = document.getElementById('formCancelBtn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', cancelEdit);
+    }
+
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
@@ -122,12 +235,21 @@ function setupForm() {
             status: "Pendiente"
         };
 
-        jobs.push(newJob);
-
-        // Show success and reset form
-        alert('Instalación agendada exitosamente.');
-        form.reset();
-        document.getElementById('installDate').valueAsDate = new Date();
+        if (editingJobId) {
+            const jobIndex = jobs.findIndex(j => j.id === editingJobId);
+            if (jobIndex > -1) {
+                newJob.scheduledAt = jobs[jobIndex].scheduledAt;
+                newJob.status = jobs[jobIndex].status;
+                jobs[jobIndex] = newJob;
+            }
+            alert('Instalación actualizada exitosamente.');
+            cancelEdit();
+        } else {
+            jobs.push(newJob);
+            alert('Instalación agendada exitosamente.');
+            form.reset();
+            document.getElementById('installDate').valueAsDate = new Date();
+        }
 
         // Update UI
         renderJobsTable();
@@ -164,6 +286,10 @@ function renderJobsTable() {
             <td>${job.tech}</td>
             <td>${job.locationStr}</td>
             <td><span class="status-badge status-pending">${job.status}</span></td>
+            <td class="actions-col">
+                <button class="btn-icon btn-edit" onclick="editJob('${job.id}')" title="Editar"><i class='bx bx-edit'></i></button>
+                <button class="btn-icon btn-delete" onclick="deleteJob('${job.id}')" title="Eliminar"><i class='bx bx-trash'></i></button>
+            </td>
         `;
 
         tbody.appendChild(tr);

@@ -578,3 +578,63 @@ small {
         align-items: stretch;
     }
 }
+
+/* Button actions */
+.btn-icon {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: var(--transition);
+    color: var(--text-secondary);
+}
+
+.btn-icon:hover {
+    color: var(--text-primary);
+}
+
+.btn-edit:hover {
+    color: var(--primary-color);
+}
+
+.btn-delete:hover {
+    color: var(--danger-color);
+}
+
+/* User Role Visibility */
+body.role-user .actions-col {
+    display: none;
+}
+
+/* Welcome Toast */
+.welcome-toast {
+    position: fixed;
+    top: 20px;
+    right: -400px;
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent-color);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    transition: right 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 9999;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.welcome-toast.show {
+    right: 20px;
+}
+
+.welcome-toast i {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+}
