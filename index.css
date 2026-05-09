@@ -638,3 +638,58 @@ body.role-user .actions-col {
     font-size: 1.5rem;
     color: var(--accent-color);
 }
+
+/* Utility classes for inline styles removal */
+.mt-1 {
+    margin-top: 1rem;
+}
+
+.fs-1-2 {
+    font-size: 1.2rem;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 1rem;
+}
+
+.form-actions .btn-primary,
+.form-actions .btn-secondary {
+    margin-top: 0;
+}
+
+.hidden {
+    display: none;
+}
+
+#userNameDisplay {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+#btnLogout {
+    width: 32px;
+    height: 32px;
+    margin-left: auto;
+}
+
+.stat-icon.primary {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.stat-icon.success {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.stat-icon.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
