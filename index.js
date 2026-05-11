@@ -92,7 +92,7 @@ function setupInactivityTimer() {
     window.onmousemove = resetTimer;
     window.onmousedown = resetTimer; // Clicks
     window.ontouchstart = resetTimer; // Toques en móviles
-    window.onclick = resetTimer;     
+    window.onclick = resetTimer;
     window.onkeypress = resetTimer;  // Teclado
     window.onscroll = resetTimer;    // Scroll
 }

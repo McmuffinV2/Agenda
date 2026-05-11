@@ -10,7 +10,7 @@ DB.init(null, PREDEFINED_USERS);
 
 document.getElementById('loginForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    
+
     const usernameInput = document.getElementById('username').value.trim().toLowerCase();
     const passwordInput = document.getElementById('password').value;
 

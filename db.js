@@ -8,27 +8,27 @@ const DB = {
     },
 
     // --- Gestión de TRABAJOS (Agenda) ---
-    getJobs: function() {
+    getJobs: function () {
         const jobs = localStorage.getItem(this.keys.JOBS);
         return jobs ? JSON.parse(jobs) : [];
     },
 
-    saveJobs: function(jobs) {
+    saveJobs: function (jobs) {
         localStorage.setItem(this.keys.JOBS, JSON.stringify(jobs));
     },
 
     // --- Gestión de USUARIOS ---
-    getUsers: function() {
+    getUsers: function () {
         const users = localStorage.getItem(this.keys.USERS);
         return users ? JSON.parse(users) : [];
     },
 
-    saveUsers: function(users) {
+    saveUsers: function (users) {
         localStorage.setItem(this.keys.USERS, JSON.stringify(users));
     },
 
     // --- Inicialización ---
-    init: function(defaultJobs, defaultUsers) {
+    init: function (defaultJobs, defaultUsers) {
         // Solo guardamos los default si la "base de datos" está totalmente vacía
         if (this.getJobs().length === 0 && defaultJobs) {
             this.saveJobs(defaultJobs);
