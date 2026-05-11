@@ -138,11 +138,35 @@ function initApp() {
     // Sidebar Toggle
     const btnToggle = document.getElementById('btnSidebarToggle');
     const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
     if (btnToggle && sidebar) {
         btnToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('show-mobile');
+                if (overlay) overlay.classList.toggle('show');
+            } else {
+                sidebar.classList.toggle('collapsed');
+            }
         });
     }
+    
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('show-mobile');
+            overlay.classList.remove('show');
+        });
+    }
+    
+    // Close mobile sidebar when clicking a nav item
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('show-mobile');
+                if (overlay) overlay.classList.remove('show');
+            }
+        });
+    });
 }
 
 function setupNotifications() {
