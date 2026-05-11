@@ -49,6 +49,14 @@
                     <i class="bx bx-map-alt"></i>
                     <span>Ruta Óptima</span>
                 </a>
+                <a href="#" class="nav-item" data-tab="historial">
+                    <i class="bx bx-history"></i>
+                    <span>Historial Completadas</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="canceladas">
+                    <i class="bx bx-x-circle"></i>
+                    <span>Canceladas</span>
+                </a>
             </nav>
             <div class="user-info">
                 <div class="avatar">
@@ -69,13 +77,29 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="topbar">
+                <button type="button" id="btnSidebarToggle" class="icon-btn" aria-label="Alternar menú lateral">
+                    <i class="bx bx-menu-alt-left"></i>
+                </button>
                 <div class="search-bar">
                     <i class="bx bx-search"></i>
-                    <input type="text" placeholder="Buscar cliente, ID o técnico...">
+                    <input type="text" id="globalSearch" placeholder="Buscar cliente, ID o técnico...">
                 </div>
                 <div class="topbar-actions">
-                    <button type="button" class="icon-btn" aria-label="Notificaciones"><i
-                            class="bx bx-bell"></i></button>
+                    <div class="notifications-wrapper">
+                        <button type="button" class="icon-btn" id="btnNotifications" aria-label="Notificaciones">
+                            <i class="bx bx-bell"></i>
+                            <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                        </button>
+                        <div class="notifications-panel" id="notificationsPanel">
+                            <div class="notifications-header">
+                                <h3>Notificaciones</h3>
+                                <button type="button" id="clearNotifications">Limpiar</button>
+                            </div>
+                            <div class="notifications-body" id="notificationsList">
+                                <div class="empty-notifications">No hay notificaciones</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="datetime-display" id="currentDateTime"></div>
                 </div>
             </header>
@@ -100,7 +124,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3>Completadas</h3>
-                                <p>0</p>
+                                <p id="stat-completed">0</p>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -117,6 +141,15 @@
                     <div class="recent-jobs">
                         <div class="section-header">
                             <h2>Próximas Instalaciones</h2>
+                            <div class="filter-controls">
+                                <select id="dashboardTechFilter">
+                                    <option value="all">Todos los técnicos</option>
+                                    <option value="Tec. Roberto Gómez">Tec. Roberto Gómez</option>
+                                    <option value="Tec. Ana López">Tec. Ana López</option>
+                                    <option value="Tec. Carlos Ruiz">Tec. Carlos Ruiz</option>
+                                    <option value="Tec. María Torres">Tec. María Torres</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table id="jobsTable">
@@ -190,7 +223,6 @@
                                         <input type="text" id="coordsInput" placeholder="Ej. 23.247596, -106.411560"
                                             required class="w-100">
                                     </div>
-                                    <small>Pega aquí la latitud y longitud separadas por coma.</small>
                                 </div>
                             </div>
 
@@ -225,6 +257,78 @@
                     </div>
                     <div class="map-container">
                         <div id="map"></div>
+                    </div>
+                </section>
+
+                <!-- Tab: Historial -->
+                <section id="historial" class="tab-content">
+                    <div class="recent-jobs">
+                        <div class="section-header">
+                            <h2>Historial de Instalaciones Completadas</h2>
+                            <div class="filter-controls">
+                                <select id="historyTechFilter">
+                                    <option value="all">Todos los técnicos</option>
+                                    <option value="Tec. Roberto Gómez">Tec. Roberto Gómez</option>
+                                    <option value="Tec. Ana López">Tec. Ana López</option>
+                                    <option value="Tec. Carlos Ruiz">Tec. Carlos Ruiz</option>
+                                    <option value="Tec. María Torres">Tec. María Torres</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="historyTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID Cliente</th>
+                                        <th>Cliente</th>
+                                        <th>Fecha / Hora</th>
+                                        <th>Técnico</th>
+                                        <th>Ubicación</th>
+                                        <th>Estado</th>
+                                        <th class="actions-col">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tab: Canceladas -->
+                <section id="canceladas" class="tab-content">
+                    <div class="recent-jobs">
+                        <div class="section-header">
+                            <h2>Registro de Instalaciones Canceladas</h2>
+                            <div class="filter-controls">
+                                <select id="cancelTechFilter">
+                                    <option value="all">Todos los técnicos</option>
+                                    <option value="Tec. Roberto Gómez">Tec. Roberto Gómez</option>
+                                    <option value="Tec. Ana López">Tec. Ana López</option>
+                                    <option value="Tec. Carlos Ruiz">Tec. Carlos Ruiz</option>
+                                    <option value="Tec. María Torres">Tec. María Torres</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="cancelTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID Cliente</th>
+                                        <th>Cliente</th>
+                                        <th>Fecha / Hora</th>
+                                        <th>Técnico</th>
+                                        <th>Ubicación</th>
+                                        <th>Estado</th>
+                                        <th class="actions-col">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
 

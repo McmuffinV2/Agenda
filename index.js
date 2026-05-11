@@ -97,6 +97,8 @@ function setupInactivityTimer() {
     window.onscroll = resetTimer;    // Scroll
 }
 
+let notifications = [];
+
 function initApp() {
     updateDateTime();
     setInterval(updateDateTime, 60000);
@@ -108,6 +110,22 @@ function initApp() {
 
     document.getElementById('btnOptimize').addEventListener('click', generateRoute);
     document.getElementById('routeTechnician').addEventListener('change', generateRoute);
+    document.getElementById('dashboardTechFilter').addEventListener('change', renderJobsTable);
+    const historyTechFilter = document.getElementById('historyTechFilter');
+    if (historyTechFilter) historyTechFilter.addEventListener('change', renderHistoryTable);
+    const cancelTechFilter = document.getElementById('cancelTechFilter');
+    if (cancelTechFilter) cancelTechFilter.addEventListener('change', renderCancelTable);
+
+    const searchInput = document.getElementById('globalSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            renderJobsTable();
+            renderHistoryTable();
+            renderCancelTable();
+        });
+    }
+
+    setupNotifications();
 
     const btnLogout = document.getElementById('btnLogout');
     if (btnLogout) {
@@ -116,6 +134,91 @@ function initApp() {
             window.location.href = 'Login.html';
         });
     }
+
+    // Sidebar Toggle
+    const btnToggle = document.getElementById('btnSidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+    if (btnToggle && sidebar) {
+        btnToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+    }
+}
+
+function setupNotifications() {
+    const btn = document.getElementById('btnNotifications');
+    const panel = document.getElementById('notificationsPanel');
+    const clearBtn = document.getElementById('clearNotifications');
+
+    if (btn && panel) {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            panel.classList.toggle('show');
+            // reset badge
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                badge.style.display = 'none';
+                badge.innerText = '0';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!panel.contains(e.target) && !btn.contains(e.target)) {
+                panel.classList.remove('show');
+            }
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            notifications = [];
+            renderNotifications();
+        });
+    }
+}
+
+function addNotification(type, message) {
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    
+    notifications.unshift({ type, message, time: timeStr });
+    
+    // limit to 20
+    if (notifications.length > 20) notifications.pop();
+    
+    // update badge
+    const badge = document.getElementById('notificationBadge');
+    if (badge) {
+        let count = parseInt(badge.innerText || '0') + 1;
+        badge.innerText = count;
+        badge.style.display = 'flex';
+    }
+    
+    renderNotifications();
+}
+
+function renderNotifications() {
+    const list = document.getElementById('notificationsList');
+    if (!list) return;
+
+    if (notifications.length === 0) {
+        list.innerHTML = '<div class="empty-notifications">No hay notificaciones</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+    notifications.forEach(n => {
+        const icon = n.type === 'success' ? 'bx-check-circle' : 'bx-x-circle';
+        list.innerHTML += `
+            <div class="notification-item ${n.type}">
+                <i class='bx ${icon}'></i>
+                <div class="content">
+                    <p>${n.message}</p>
+                    <small>${n.time}</small>
+                </div>
+            </div>
+        `;
+    });
 }
 
 function updateRoleUI() {
@@ -140,6 +243,41 @@ function updateRoleUI() {
         document.body.classList.remove('role-admin');
     }
     renderJobsTable();
+}
+
+function toggleJobStatus(id) {
+    if (currentUserRole !== 'admin') {
+        alert('No tienes permisos para cambiar el estado de las instalaciones.');
+        return;
+    }
+    const jobIndex = jobs.findIndex(j => j.id === id);
+    if (jobIndex > -1) {
+        const isNowCompleted = jobs[jobIndex].status !== "Completado";
+        jobs[jobIndex].status = isNowCompleted ? "Completado" : "Pendiente";
+        
+        if (isNowCompleted) {
+            addNotification('success', `Instalación de ${jobs[jobIndex].name} completada.`);
+        }
+
+        DB.saveJobs(jobs);
+        renderJobsTable();
+    }
+}
+
+function cancelJob(id) {
+    if (currentUserRole !== 'admin') {
+        alert('No tienes permisos para cancelar instalaciones.');
+        return;
+    }
+    if (confirm('¿Estás seguro de cancelar esta instalación?')) {
+        const jobIndex = jobs.findIndex(j => j.id === id);
+        if (jobIndex > -1) {
+            jobs[jobIndex].status = "Cancelado";
+            addNotification('danger', `Instalación de ${jobs[jobIndex].name} cancelada.`);
+            DB.saveJobs(jobs);
+            renderJobsTable();
+        }
+    }
 }
 
 function deleteJob(id) {
@@ -297,8 +435,29 @@ function renderJobsTable() {
     const tbody = document.querySelector('#jobsTable tbody');
     tbody.innerHTML = '';
 
+    const filterSelect = document.getElementById('dashboardTechFilter');
+    const selectedTech = filterSelect ? filterSelect.value : 'all';
+
+    const searchInput = document.getElementById('globalSearch');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+    // Ocultar las instalaciones completadas y canceladas de la tabla de "Próximas Instalaciones"
+    let filteredJobs = jobs.filter(j => j.status !== 'Completado' && j.status !== 'Cancelado');
+
+    if (selectedTech !== 'all') {
+        filteredJobs = filteredJobs.filter(j => j.tech === selectedTech);
+    }
+
+    if (searchTerm) {
+        filteredJobs = filteredJobs.filter(j => 
+            j.id.toLowerCase().includes(searchTerm) ||
+            j.name.toLowerCase().includes(searchTerm) ||
+            j.tech.toLowerCase().includes(searchTerm)
+        );
+    }
+
     // Sort by date and time
-    const sortedJobs = [...jobs].sort((a, b) => {
+    const sortedJobs = [...filteredJobs].sort((a, b) => {
         const dateA = new Date(`${a.date}T${a.time}`);
         const dateB = new Date(`${b.date}T${b.time}`);
         return dateA - dateB;
@@ -319,8 +478,14 @@ function renderJobsTable() {
             </td>
             <td>${job.tech}</td>
             <td>${job.locationStr}</td>
-            <td><span class="status-badge status-pending">${job.status}</span></td>
+            <td><span class="status-badge ${job.status === 'Completado' ? 'status-routed' : (job.status === 'En Ruta' ? 'status-routed' : 'status-pending')}">${job.status}</span></td>
             <td class="actions-col">
+                <button class="btn-icon btn-complete" onclick="toggleJobStatus('${job.id}')" title="Marcar completada">
+                    <i class='bx ${job.status === "Completado" ? "bx-check-circle" : "bx-circle"}'></i>
+                </button>
+                <button class="btn-icon btn-cancel" onclick="cancelJob('${job.id}')" title="Cancelar Instalación">
+                    <i class='bx bx-block'></i>
+                </button>
                 <button class="btn-icon btn-edit" onclick="editJob('${job.id}')" title="Editar"><i class='bx bx-edit'></i></button>
                 <button class="btn-icon btn-delete" onclick="deleteJob('${job.id}')" title="Eliminar"><i class='bx bx-trash'></i></button>
             </td>
@@ -329,7 +494,137 @@ function renderJobsTable() {
         tbody.appendChild(tr);
     });
 
-    document.getElementById('stat-today').innerText = jobs.filter(j => j.date === new Date().toISOString().split('T')[0]).length;
+    renderHistoryTable();
+    renderCancelTable();
+    updateStats();
+}
+
+function renderHistoryTable() {
+    const tbody = document.querySelector('#historyTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const filterSelect = document.getElementById('historyTechFilter');
+    const selectedTech = filterSelect ? filterSelect.value : 'all';
+
+    const searchInput = document.getElementById('globalSearch');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+    let completedJobs = jobs.filter(j => j.status === 'Completado');
+
+    if (selectedTech !== 'all') {
+        completedJobs = completedJobs.filter(j => j.tech === selectedTech);
+    }
+
+    if (searchTerm) {
+        completedJobs = completedJobs.filter(j => 
+            j.id.toLowerCase().includes(searchTerm) ||
+            j.name.toLowerCase().includes(searchTerm) ||
+            j.tech.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    // Sort by date and time (descending)
+    const sortedJobs = [...completedJobs].sort((a, b) => {
+        const dateA = new Date(`${a.date}T${a.time}`);
+        const dateB = new Date(`${b.date}T${b.time}`);
+        return dateB - dateA;
+    });
+
+    sortedJobs.forEach(job => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td><strong>${job.id}</strong></td>
+            <td>
+                <div>${job.name}</div>
+                <small style="color: var(--text-secondary)">Agendado por: ${job.scheduler}</small>
+            </td>
+            <td>
+                <div>${job.date}</div>
+                <small style="color: var(--text-secondary)">${job.time}</small>
+            </td>
+            <td>${job.tech}</td>
+            <td>${job.locationStr}</td>
+            <td><span class="status-badge status-routed">${job.status}</span></td>
+            <td class="actions-col">
+                <button class="btn-icon btn-complete" onclick="toggleJobStatus('${job.id}')" title="Desmarcar (Volver a pendiente)">
+                    <i class='bx bx-undo'></i>
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+function renderCancelTable() {
+    const tbody = document.querySelector('#cancelTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const filterSelect = document.getElementById('cancelTechFilter');
+    const selectedTech = filterSelect ? filterSelect.value : 'all';
+
+    const searchInput = document.getElementById('globalSearch');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+    let cancelledJobs = jobs.filter(j => j.status === 'Cancelado');
+
+    if (selectedTech !== 'all') {
+        cancelledJobs = cancelledJobs.filter(j => j.tech === selectedTech);
+    }
+
+    if (searchTerm) {
+        cancelledJobs = cancelledJobs.filter(j => 
+            j.id.toLowerCase().includes(searchTerm) ||
+            j.name.toLowerCase().includes(searchTerm) ||
+            j.tech.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    // Sort by date and time (descending)
+    const sortedJobs = [...cancelledJobs].sort((a, b) => {
+        const dateA = new Date(`${a.date}T${a.time}`);
+        const dateB = new Date(`${b.date}T${b.time}`);
+        return dateB - dateA;
+    });
+
+    sortedJobs.forEach(job => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td><strong>${job.id}</strong></td>
+            <td>
+                <div>${job.name}</div>
+                <small style="color: var(--text-secondary)">Agendado por: ${job.scheduler}</small>
+            </td>
+            <td>
+                <div>${job.date}</div>
+                <small style="color: var(--text-secondary)">${job.time}</small>
+            </td>
+            <td>${job.tech}</td>
+            <td>${job.locationStr}</td>
+            <td><span class="status-badge status-pending" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">${job.status}</span></td>
+            <td class="actions-col">
+                <button class="btn-icon btn-delete" onclick="deleteJob('${job.id}')" title="Eliminar definitivamente"><i class='bx bx-trash'></i></button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+function updateStats() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayJobs = jobs.filter(j => j.date === today && j.status !== 'Completado' && j.status !== 'Cancelado').length;
+    const completedJobs = jobs.filter(j => j.status === 'Completado').length;
+
+    const statTodayEl = document.getElementById('stat-today');
+    if (statTodayEl) statTodayEl.innerText = todayJobs;
+
+    const statCompletedEl = document.getElementById('stat-completed');
+    if (statCompletedEl) statCompletedEl.innerText = completedJobs;
 }
 
 function initMap() {
@@ -355,9 +650,9 @@ function generateRoute() {
     markers = [];
 
     // Filter jobs
-    let filteredJobs = jobs;
+    let filteredJobs = jobs.filter(j => j.status !== 'Completado' && j.status !== 'Cancelado');
     if (selectedTech !== 'all') {
-        filteredJobs = jobs.filter(j => j.tech === selectedTech);
+        filteredJobs = filteredJobs.filter(j => j.tech === selectedTech);
     }
 
     if (filteredJobs.length === 0) {
