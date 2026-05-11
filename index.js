@@ -1,5 +1,5 @@
 // Initial State Data (Mock Data to start)
-let jobs = [
+const defaultJobs = [
     {
         id: "CLI-1001",
         name: "Empresa S.A. de C.V.",
@@ -28,6 +28,10 @@ let jobs = [
     }
 ];
 
+// Cargamos de la base de datos local o usamos los defaults
+DB.init(defaultJobs, null);
+let jobs = DB.getJobs();
+
 let map;
 let routingControl;
 let markers = [];
@@ -50,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentUserName = user.name;
 
     initApp();
+    setupInactivityTimer(); // Iniciar temporizador de inactividad
 
     // Show welcome toast
     const toast = document.getElementById('welcomeToast');
@@ -65,6 +70,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 4000);
     }
 });
+
+// Función para cerrar sesión por inactividad
+function setupInactivityTimer() {
+    let timer;
+    const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutos en milisegundos
+
+    function logout() {
+        console.log("Cerrando sesión por inactividad...");
+        sessionStorage.removeItem('netroute_user');
+        window.location.href = 'Login.html';
+    }
+
+    function resetTimer() {
+        clearTimeout(timer);
+        timer = setTimeout(logout, INACTIVITY_LIMIT);
+    }
+
+    // Eventos que reinician el temporizador
+    window.onload = resetTimer;
+    window.onmousemove = resetTimer;
+    window.onmousedown = resetTimer; // Clicks
+    window.ontouchstart = resetTimer; // Toques en móviles
+    window.onclick = resetTimer;     
+    window.onkeypress = resetTimer;  // Teclado
+    window.onscroll = resetTimer;    // Scroll
+}
 
 function initApp() {
     updateDateTime();
@@ -118,6 +149,7 @@ function deleteJob(id) {
     }
     if (confirm(`¿Estás seguro de eliminar la instalación con ID ${id}?`)) {
         jobs = jobs.filter(j => j.id !== id);
+        DB.saveJobs(jobs); // Guardar cambios
         renderJobsTable();
         if (document.getElementById('ruta').classList.contains('active')) {
             generateRoute();
@@ -242,10 +274,12 @@ function setupForm() {
                 newJob.status = jobs[jobIndex].status;
                 jobs[jobIndex] = newJob;
             }
+            DB.saveJobs(jobs); // Guardar cambios
             alert('Instalación actualizada exitosamente.');
             cancelEdit();
         } else {
             jobs.push(newJob);
+            DB.saveJobs(jobs); // Guardar cambios
             alert('Instalación agendada exitosamente.');
             form.reset();
             document.getElementById('installDate').valueAsDate = new Date();
@@ -369,5 +403,6 @@ function generateRoute() {
 
     // Update statuses
     filteredJobs.forEach(j => j.status = "En Ruta");
+    DB.saveJobs(jobs); // Guardar cambios de estado
     renderJobsTable();
 }
