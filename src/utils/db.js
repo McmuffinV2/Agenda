@@ -1,30 +1,29 @@
-// db.js - Gestión de persistencia local (localStorage)
-// Este archivo debe cargarse ANTES que index.js y Login.js
+// src/utils/db.js - Gestión de persistencia local (localStorage)
+
+const KEYS = {
+    JOBS: 'sanfercom_jobs',
+    USERS: 'sanfercom_users'
+};
 
 const DB = {
-    keys: {
-        JOBS: 'sanfercom_jobs',
-        USERS: 'sanfercom_users'
-    },
-
     // --- Gestión de TRABAJOS (Agenda) ---
     getJobs: function () {
-        const jobs = localStorage.getItem(this.keys.JOBS);
+        const jobs = localStorage.getItem(KEYS.JOBS);
         return jobs ? JSON.parse(jobs) : [];
     },
 
     saveJobs: function (jobs) {
-        localStorage.setItem(this.keys.JOBS, JSON.stringify(jobs));
+        localStorage.setItem(KEYS.JOBS, JSON.stringify(jobs));
     },
 
     // --- Gestión de USUARIOS ---
     getUsers: function () {
-        const users = localStorage.getItem(this.keys.USERS);
+        const users = localStorage.getItem(KEYS.USERS);
         return users ? JSON.parse(users) : [];
     },
 
     saveUsers: function (users) {
-        localStorage.setItem(this.keys.USERS, JSON.stringify(users));
+        localStorage.setItem(KEYS.USERS, JSON.stringify(users));
     },
 
     // --- Inicialización ---
@@ -38,3 +37,5 @@ const DB = {
         }
     }
 };
+
+export default DB;
