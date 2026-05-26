@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import DB from '../../utils/db';
 
+const escapeHTML = (str) => {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+};
+
 const RutaView = ({ jobs, setJobs }) => {
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
@@ -8,9 +18,11 @@ const RutaView = ({ jobs, setJobs }) => {
     const markers = useRef([]);
     const [selectedTech, setSelectedTech] = useState('all');
 
+    //cordenad de prueba 23.274071, -106.410356 || 23.274344, -106.366864
+
     useEffect(() => {
         if (!mapInstance.current && window.L) {
-            mapInstance.current = window.L.map(mapRef.current).setView([20.659698, -103.349609], 12);
+            mapInstance.current = window.L.map(mapRef.current).setView([23.248100, -106.411428], 12);
             window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
                 subdomains: 'abcd',
@@ -53,10 +65,10 @@ const RutaView = ({ jobs, setJobs }) => {
             const marker = window.L.marker([job.lat, job.lng]).addTo(mapInstance.current);
             marker.bindPopup(`
                 <div style="font-family: 'Outfit'; color: #333;">
-                    <h3 style="margin:0 0 5px 0;">${job.id}</h3>
-                    <p style="margin:0;"><strong>Cliente:</strong> ${job.name}</p>
-                    <p style="margin:0;"><strong>Hora:</strong> ${job.time}</p>
-                    <p style="margin:0;"><strong>Técnico:</strong> ${job.tech}</p>
+                    <h3 style="margin:0 0 5px 0;">${escapeHTML(job.id)}</h3>
+                    <p style="margin:0;"><strong>Cliente:</strong> ${escapeHTML(job.name)}</p>
+                    <p style="margin:0;"><strong>Hora:</strong> ${escapeHTML(job.time)}</p>
+                    <p style="margin:0;"><strong>Técnico:</strong> ${escapeHTML(job.tech)}</p>
                 </div>
             `);
             markers.current.push(marker);

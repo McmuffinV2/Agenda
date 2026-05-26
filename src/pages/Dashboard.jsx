@@ -7,6 +7,7 @@ import AgendaView from '../components/views/AgendaView';
 import RutaView from '../components/views/RutaView';
 import HistoryView from '../components/views/HistoryView';
 import CancelView from '../components/views/CancelView';
+import MyReportsView from '../components/views/MyReportsView';
 import logo from '../assets/logo.png';
 
 const Dashboard = () => {
@@ -21,7 +22,7 @@ const Dashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [editingJob, setEditingJob] = useState(null);
     const [showWelcomeToast, setShowWelcomeToast] = useState(false);
-    
+
     const navigate = useNavigate();
 
     const logout = useCallback(() => {
@@ -35,7 +36,13 @@ const Dashboard = () => {
             navigate('/login');
             return;
         }
-        setUser(JSON.parse(userStr));
+        const sessionUser = JSON.parse(userStr);
+
+        // Obtener el usuario actualizado de la DB para reflejar cambios de rol sin forzar logout manual
+        const dbUsers = DB.getUsers();
+        const updatedUser = dbUsers.find(u => u.username === sessionUser.username) || sessionUser;
+        setUser(updatedUser);
+        sessionStorage.setItem('netroute_user', JSON.stringify(updatedUser));
 
         DB.init(DEFAULT_JOBS, null);
         setJobs(DB.getJobs());
@@ -127,6 +134,16 @@ const Dashboard = () => {
         }
     };
 
+    const handleReportNoRecibido = (id, comment) => {
+        const updatedJobs = jobs.map(j =>
+            j.id === id ? { ...j, status: 'Cancelado', comment: comment } : j
+        );
+        const job = jobs.find(j => j.id === id);
+        addNotification('danger', `Instalación de ${job.name} no recibida: ${comment}`);
+        setJobs(updatedJobs);
+        DB.saveJobs(updatedJobs);
+    };
+
     const handleDeleteJob = (id) => {
         if (user.role !== 'admin') {
             alert('No tienes permisos para eliminar.');
@@ -137,6 +154,20 @@ const Dashboard = () => {
             setJobs(updatedJobs);
             DB.saveJobs(updatedJobs);
         }
+    };
+
+    const handleRestoreJob = (id) => {
+        if (user.role !== 'admin') {
+            alert('No tienes permisos para reagendar.');
+            return;
+        }
+        const updatedJobs = jobs.map(j =>
+            j.id === id ? { ...j, status: 'Pendiente', comment: null } : j
+        );
+        const job = jobs.find(j => j.id === id);
+        addNotification('success', `Instalación de ${job.name} reagendada.`);
+        setJobs(updatedJobs);
+        DB.saveJobs(updatedJobs);
     };
 
     const handleEditJob = (id) => {
@@ -150,6 +181,12 @@ const Dashboard = () => {
     };
 
     const handleTabChange = (tab) => {
+        if (user.role === 'tecnico' && (tab === 'agenda' || tab === 'historial' || tab === 'cancelados')) {
+            return;
+        }
+        if (user.role !== 'tecnico' && tab === 'mis-reportes') {
+            return;
+        }
         setActiveTab(tab);
         if (window.innerWidth <= 768) {
             setIsMobileSidebarShow(false);
@@ -160,15 +197,18 @@ const Dashboard = () => {
 
     return (
         <div className="app-container">
-            <div 
+            <div
                 className={`sidebar-overlay ${isMobileSidebarShow ? 'show' : ''}`}
                 onClick={() => setIsMobileSidebarShow(false)}
             ></div>
 
             <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${isMobileSidebarShow ? 'show-mobile' : ''}`}>
+                <button className="sidebar-close-btn" onClick={() => setIsMobileSidebarShow(false)}>
+                    <i className="bx bx-x"></i>
+                </button>
                 <div className="logo">
-                    <img src={logo} alt="Sanfercom Logo" style={{ width: '40px', height: 'auto' }} />
-                    <span>Sanfercom</span>
+                    {/*  // <img src={logo} alt="Sanfercom Logo" style={{ width: '40px', height: 'auto' }} />*/}
+                    <span>SAMFERCOM</span>
                 </div>
 
                 <nav className="nav-menu">
@@ -176,34 +216,46 @@ const Dashboard = () => {
                         <i className="bx bxs-dashboard"></i>
                         <span>Dashboard</span>
                     </a>
-                    <a href="#" className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); handleTabChange('agenda'); }}>
-                        <i className="bx bxs-calendar-plus"></i>
-                        <span>{editingJob ? 'Editar' : 'Agendar'}</span>
-                    </a>
+                    {user.role !== 'tecnico' && (
+                        <a href="#" className={`nav-item ${activeTab === 'agenda' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); handleTabChange('agenda'); }}>
+                            <i className="bx bxs-calendar-plus"></i>
+                            <span>{editingJob ? 'Editar' : 'Agendar'}</span>
+                        </a>
+                    )}
                     <a href="#" className={`nav-item ${activeTab === 'ruta' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); handleTabChange('ruta'); }}>
                         <i className="bx bxs-map-alt"></i>
                         <span>Ruta Óptima</span>
                     </a>
-                    <a href="#" className={`nav-item ${activeTab === 'historial' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); handleTabChange('historial'); }}>
-                        <i className="bx bx-history"></i>
-                        <span>Historial</span>
-                    </a>
-                    <a href="#" className={`nav-item ${activeTab === 'cancelados' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); handleTabChange('cancelados'); }}>
-                        <i className="bx bx-error-circle"></i>
-                        <span>Cancelados</span>
-                    </a>
+                    {user.role !== 'tecnico' && (
+                        <a href="#" className={`nav-item ${activeTab === 'historial' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); handleTabChange('historial'); }}>
+                            <i className="bx bx-history"></i>
+                            <span>Historial</span>
+                        </a>
+                    )}
+                    {user.role !== 'tecnico' && (
+                        <a href="#" className={`nav-item ${activeTab === 'cancelados' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); handleTabChange('cancelados'); }}>
+                            <i className="bx bx-error-circle"></i>
+                            <span>Cancelados</span>
+                        </a>
+                    )}
+                    {user.role === 'tecnico' && (
+                        <a href="#" className={`nav-item ${activeTab === 'mis-reportes' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); handleTabChange('mis-reportes'); }}>
+                            <i className="bx bxs-report"></i>
+                            <span>Mis Reportes</span>
+                        </a>
+                    )}
                 </nav>
 
                 <div className="user-info">
                     <div className="avatar">
-                        <img 
-                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=${user.role === 'admin' ? '0D8ABC' : '6B7280'}&color=fff`} 
-                            alt="Avatar" 
+                        <img
+                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=${user.role === 'admin' ? '0D8ABC' : '6B7280'}&color=fff`}
+                            alt="Avatar"
                         />
                     </div>
                     <div className="details">
                         <h4>{user.name}</h4>
-                        <p>{user.role === 'admin' ? 'Administrador' : 'Agendador'}</p>
+                        <p>{user.role === 'admin' ? 'Administrador' : user.role === 'tecnico' ? 'Técnico' : 'Agendador'}</p>
                     </div>
                     <button className="icon-btn" onClick={logout} style={{ marginLeft: 'auto' }}>
                         <i className="bx bx-log-out"></i>
@@ -213,8 +265,8 @@ const Dashboard = () => {
 
             <main className="main-content">
                 <header className="topbar">
-                    <button 
-                        className="icon-btn" 
+                    <button
+                        className="icon-btn"
                         onClick={() => {
                             if (window.innerWidth <= 768) setIsMobileSidebarShow(!isMobileSidebarShow);
                             else setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -227,9 +279,9 @@ const Dashboard = () => {
 
                     <div className="search-bar">
                         <i className="bx bx-search"></i>
-                        <input 
-                            type="text" 
-                            placeholder="Buscar cliente, ID o técnico..." 
+                        <input
+                            type="text"
+                            placeholder="Buscar cliente, ID o técnico..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -237,8 +289,8 @@ const Dashboard = () => {
 
                     <div className="topbar-actions">
                         <div className="notifications-wrapper">
-                            <button 
-                                className="icon-btn" 
+                            <button
+                                className="icon-btn"
                                 onClick={() => setShowNotifications(!showNotifications)}
                             >
                                 <i className="bx bx-bell"></i>
@@ -271,18 +323,20 @@ const Dashboard = () => {
 
                 <div className="content-wrapper">
                     {activeTab === 'dashboard' && (
-                        <DashboardView 
-                            jobs={jobs} 
-                            searchTerm={searchTerm} 
+                        <DashboardView
+                            jobs={jobs}
+                            searchTerm={searchTerm}
                             onStatusChange={handleStatusChange}
                             onCancel={handleCancelJob}
                             onEdit={handleEditJob}
                             onDelete={handleDeleteJob}
+                            onReportNoRecibido={handleReportNoRecibido}
                             role={user.role}
+                            currentUser={user}
                         />
                     )}
                     {activeTab === 'agenda' && (
-                        <AgendaView 
+                        <AgendaView
                             onSave={handleSaveJob}
                             editingJob={editingJob}
                             onCancelEdit={() => { setEditingJob(null); setActiveTab('dashboard'); }}
@@ -290,20 +344,28 @@ const Dashboard = () => {
                         />
                     )}
                     {activeTab === 'ruta' && (
-                        <RutaView jobs={jobs} setJobs={setJobs} />
+                        <RutaView jobs={jobs} setJobs={setJobs} currentUser={user} />
                     )}
                     {activeTab === 'historial' && (
-                        <HistoryView 
-                            jobs={jobs} 
-                            searchTerm={searchTerm} 
+                        <HistoryView
+                            jobs={jobs}
+                            searchTerm={searchTerm}
                             onUndoStatus={handleStatusChange}
                         />
                     )}
                     {activeTab === 'cancelados' && (
-                        <CancelView 
-                            jobs={jobs} 
-                            searchTerm={searchTerm} 
+                        <CancelView
+                            jobs={jobs}
+                            searchTerm={searchTerm}
                             onDelete={handleDeleteJob}
+                            onRestore={handleRestoreJob}
+                        />
+                    )}
+                    {activeTab === 'mis-reportes' && (
+                        <MyReportsView
+                            jobs={jobs}
+                            currentUser={user}
+                            searchTerm={searchTerm}
                         />
                     )}
                 </div>

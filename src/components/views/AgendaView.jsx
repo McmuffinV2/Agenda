@@ -74,22 +74,22 @@ const AgendaView = ({ onSave, editingJob, onCancelEdit, currentUser }) => {
                     <div className="form-row">
                         <div className="input-group">
                             <label>ID del Cliente / Contrato</label>
-                            <input 
-                                type="text" 
-                                required 
-                                placeholder="Ej: CLI-1234" 
+                            <input
+                                type="text"
+                                required
+                                placeholder="Ej: CLI-1234"
                                 value={formData.clientId}
-                                onChange={(e) => setFormData({...formData, clientId: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
                             />
                         </div>
                         <div className="input-group">
                             <label>Nombre del Cliente</label>
-                            <input 
-                                type="text" 
-                                required 
-                                placeholder="Nombre completo" 
+                            <input
+                                type="text"
+                                required
+                                placeholder="Nombre completo"
                                 value={formData.clientName}
-                                onChange={(e) => setFormData({...formData, clientName: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                             />
                         </div>
                     </div>
@@ -97,20 +97,20 @@ const AgendaView = ({ onSave, editingJob, onCancelEdit, currentUser }) => {
                     <div className="form-row">
                         <div className="input-group">
                             <label>Fecha de Instalación</label>
-                            <input 
-                                type="date" 
-                                required 
+                            <input
+                                type="date"
+                                required
                                 value={formData.installDate}
-                                onChange={(e) => setFormData({...formData, installDate: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, installDate: e.target.value })}
                             />
                         </div>
                         <div className="input-group">
                             <label>Hora Aproximada</label>
-                            <input 
-                                type="time" 
-                                required 
+                            <input
+                                type="time"
+                                required
                                 value={formData.installTime}
-                                onChange={(e) => setFormData({...formData, installTime: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, installTime: e.target.value })}
                             />
                         </div>
                     </div>
@@ -118,9 +118,9 @@ const AgendaView = ({ onSave, editingJob, onCancelEdit, currentUser }) => {
                     <div className="form-row">
                         <div className="input-group">
                             <label>Técnico Asignado</label>
-                            <select 
+                            <select
                                 value={formData.technician}
-                                onChange={(e) => setFormData({...formData, technician: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, technician: e.target.value })}
                             >
                                 {TECHNICIANS.map(tech => (
                                     <option key={tech} value={tech}>{tech}</option>
@@ -130,12 +130,12 @@ const AgendaView = ({ onSave, editingJob, onCancelEdit, currentUser }) => {
                         <div className="input-group">
                             <label>Coordenadas (Lat, Lng)</label>
                             <div className="coords-picker">
-                                <input 
-                                    type="text" 
-                                    placeholder="20.659698, -103.349609" 
-                                    required 
+                                <input
+                                    type="text"
+                                    placeholder="20.659698, -103.349609"
+                                    required
                                     value={formData.coordsInput}
-                                    onChange={(e) => setFormData({...formData, coordsInput: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, coordsInput: e.target.value })}
                                 />
                             </div>
                             <small>Obtén las coordenadas de Google Maps</small>

@@ -77,4 +77,4 @@ Agenda/
 
 ---
 
-Desarrollado con ❤️ para **Sanfercom**.
+Desarrollado con y para **Sanfercom**.

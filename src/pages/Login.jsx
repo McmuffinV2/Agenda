@@ -10,8 +10,8 @@ const Login = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Inicializamos la DB con los usuarios por defecto si está vacía
-        DB.init(null, PREDEFINED_USERS);
+        // Inicializamos/actualizamos la DB con los usuarios por defecto
+        DB.saveUsers(PREDEFINED_USERS);
 
         // Si ya hay sesión, redirigimos
         const loggedUser = sessionStorage.getItem('netroute_user');
@@ -43,7 +43,7 @@ const Login = () => {
         <div className="login-page">
             <div className="login-card">
                 <div className="logo">
-                    <img src={logo} alt="Sanfercom Logo" style={{ width: '300px', height: 'auto' }} />
+                    <img src={logo} alt="Sanfercom Logo" style={{ width: '100%', maxWidth: '300px', height: 'auto' }} />
                     <span></span>
                 </div>
                 <p>Inicia sesión para continuar</p>

@@ -1,33 +1,22 @@
 import { useState } from 'react';
-import { TECHNICIANS } from '../../constants/technicians';
 
-const HistoryView = ({ jobs, searchTerm, onUndoStatus }) => {
-    const [selectedTech, setSelectedTech] = useState('all');
-    const completedJobs = jobs.filter(j => 
-        j.status === 'Completado' &&
-        (selectedTech === 'all' || j.tech === selectedTech) &&
+const MyReportsView = ({ jobs, currentUser, searchTerm }) => {
+    const reportJobs = jobs.filter(j => 
+        j.status === 'Cancelado' &&
+        j.tech === currentUser?.name &&
+        j.comment &&
         (j.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         j.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-         j.tech.toLowerCase().includes(searchTerm.toLowerCase()))
+         j.name.toLowerCase().includes(searchTerm.toLowerCase()))
     ).sort((a, b) => new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`));
 
     return (
         <section className="tab-content active">
             <div className="recent-jobs">
                 <div className="section-header">
-                    <h2>Historial de Instalaciones Completadas</h2>
-                    <div className="filter-controls">
-                        <select 
-                            value={selectedTech} 
-                            onChange={(e) => setSelectedTech(e.target.value)}
-                        >
-                            <option value="all">Todos los técnicos</option>
-                            {TECHNICIANS.map(tech => (
-                                <option key={tech} value={tech}>{tech}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <h2>Mis Reportes de Inasistencia</h2>
                 </div>
+                
+                {/* Desktop View */}
                 <div className="table-responsive desktop-only">
                     <table>
                         <thead>
@@ -35,17 +24,19 @@ const HistoryView = ({ jobs, searchTerm, onUndoStatus }) => {
                                 <th>ID</th>
                                 <th>Cliente</th>
                                 <th>Fecha/Hora</th>
-                                <th>Técnico</th>
                                 <th>Ubicación</th>
-                                <th>Estado</th>
-                                <th className="actions-col">Acciones</th>
+                                <th>Comentario</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {completedJobs.length === 0 ? (
-                                <tr><td colSpan="7" style={{ textAlign: 'center' }}>No hay instalaciones completadas</td></tr>
+                            {reportJobs.length === 0 ? (
+                                <tr>
+                                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                                        No has reportado ninguna inasistencia aún.
+                                    </td>
+                                </tr>
                             ) : (
-                                completedJobs.map(job => (
+                                reportJobs.map(job => (
                                     <tr key={job.id}>
                                         <td><strong>{job.id}</strong></td>
                                         <td>
@@ -56,13 +47,19 @@ const HistoryView = ({ jobs, searchTerm, onUndoStatus }) => {
                                             <div>{job.date}</div>
                                             <small style={{ color: 'var(--text-secondary)' }}>{job.time}</small>
                                         </td>
-                                        <td>{job.tech}</td>
                                         <td>{job.locationStr}</td>
-                                        <td><span className="status-badge status-routed">{job.status}</span></td>
-                                        <td className="actions-col">
-                                            <button className="btn-icon btn-complete" onClick={() => onUndoStatus(job.id)} title="Desmarcar (Volver a pendiente)">
-                                                <i className="bx bx-undo"></i>
-                                            </button>
+                                        <td>
+                                            <div style={{ 
+                                                fontSize: '0.9rem', 
+                                                color: '#fca5a5', 
+                                                background: 'rgba(239, 68, 68, 0.15)', 
+                                                padding: '6px 12px', 
+                                                borderRadius: '6px', 
+                                                borderLeft: '3px solid var(--danger-color)',
+                                                maxWidth: '400px'
+                                            }}>
+                                                {job.comment}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -71,22 +68,24 @@ const HistoryView = ({ jobs, searchTerm, onUndoStatus }) => {
                     </table>
                 </div>
 
-                {/* Vista móvil para historial */}
+                {/* Mobile View */}
                 <div className="mobile-only">
-                    {completedJobs.length === 0 ? (
+                    {reportJobs.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                            No hay instalaciones completadas
+                            No has reportado ninguna inasistencia aún.
                         </div>
                     ) : (
                         <div className="job-cards-list">
-                            {completedJobs.map(job => (
+                            {reportJobs.map(job => (
                                 <div key={job.id} className="job-card-mobile">
                                     <div className="job-card-header">
                                         <div className="client-info">
                                             <h3>{job.name}</h3>
                                             <small style={{ display: 'block', marginTop: '2px' }}>ID: {job.id}</small>
                                         </div>
-                                        <span className="status-badge status-routed">{job.status}</span>
+                                        <span className="status-badge status-pending" style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5' }}>
+                                            No Recibido
+                                        </span>
                                     </div>
                                     <div className="job-card-body">
                                         <div className="job-card-row">
@@ -102,12 +101,6 @@ const HistoryView = ({ jobs, searchTerm, onUndoStatus }) => {
                                             </div>
                                         </div>
                                         <div className="job-card-row">
-                                            <i className="bx bx-user"></i>
-                                            <div>
-                                                <span>Técnico:</span> {job.tech}
-                                            </div>
-                                        </div>
-                                        <div className="job-card-row">
                                             <i className="bx bx-map"></i>
                                             <div>
                                                 <span>Ubicación:</span> {job.locationStr}
@@ -119,11 +112,14 @@ const HistoryView = ({ jobs, searchTerm, onUndoStatus }) => {
                                                 <span>Agendado por:</span> {job.scheduler}
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="job-card-actions">
-                                        <button className="btn-icon btn-complete" onClick={() => onUndoStatus(job.id)} title="Desmarcar (Volver a pendiente)">
-                                            <i className="bx bx-undo"></i>
-                                        </button>
+                                        <div className="job-card-row" style={{ marginTop: '8px', padding: '8px', background: 'rgba(239, 68, 68, 0.15)', borderRadius: '6px', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                                            <span style={{ color: '#fca5a5', fontWeight: '600', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <i className="bx bx-message-rounded-error"></i> Comentario del Técnico:
+                                            </span>
+                                            <div style={{ fontSize: '0.85rem', color: '#fca5a5', lineHeight: '1.4' }}>
+                                                {job.comment}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -135,4 +131,4 @@ const HistoryView = ({ jobs, searchTerm, onUndoStatus }) => {
     );
 };
 
-export default HistoryView;
+export default MyReportsView;
